@@ -106,17 +106,11 @@ export default function DashboardScreen({ navigation }) {
           <View style={styles.row}>
             <View style={styles.rateCard}>
               <Text style={styles.rateCurrency}>USD</Text>
-              <Text>{formatCurrency(rates.usd.bid)}</Text>
-              <Text style={[styles.variation, rates.usd.variation >= 0 ? styles.posVar : styles.negVar]}>
-                {rates.usd.variation}%
-              </Text>
+              <Text style={styles.rateValue}>{formatCurrency(rates.usd.bid)}</Text>
             </View>
             <View style={styles.rateCard}>
               <Text style={styles.rateCurrency}>EUR</Text>
-              <Text>{formatCurrency(rates.eur.bid)}</Text>
-              <Text style={[styles.variation, rates.eur.variation >= 0 ? styles.posVar : styles.negVar]}>
-                {rates.eur.variation}%
-              </Text>
+              <Text style={styles.rateValue}>{formatCurrency(rates.eur.bid)}</Text>
             </View>
           </View>
         ) : (
@@ -143,9 +137,7 @@ const styles = StyleSheet.create({
   section: { fontSize: 18, fontWeight: '700', marginVertical: 12, color: colors.text },
   rateCard: { flex: 1, backgroundColor: colors.card, padding: 14, borderRadius: 16, alignItems: 'center', ...shadow },
   rateCurrency: { fontWeight: 'bold', fontSize: 16 },
-  variation: { fontSize: 12, marginTop: 4 },
-  posVar: { color: colors.success },
-  negVar: { color: colors.danger },
+  rateValue: { fontSize: 18, fontWeight: '700', marginTop: 8, color: colors.primary },
   empty: { textAlign: 'center', color: colors.textMuted, marginVertical: 20 },
   error: { color: colors.danger, textAlign: 'center' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },

@@ -8,7 +8,7 @@ import { fetchExchangeRates } from '../services/api';
 import { colors } from '../utils/colors';
 
 export default function DashboardScreen({ navigation }) {
-  const { transactions, loading: ctxLoading, error: ctxError } = useFinance();
+  const { transactions, deleteTransaction, loading: ctxLoading, error: ctxError } = useFinance();
   const [rates, setRates] = useState(null);
   const [ratesLoading, setRatesLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -94,7 +94,7 @@ export default function DashboardScreen({ navigation }) {
               key={tx.id}
               transaction={tx}
               onEdit={() => navigation.navigate('AddEdit', { transaction: tx })}
-              onDelete={() => {}}
+              onDelete={() => deleteTransaction(tx.id)}
             />
           ))
         )}

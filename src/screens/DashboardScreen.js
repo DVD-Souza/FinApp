@@ -99,23 +99,45 @@ export default function DashboardScreen({ navigation }) {
           ))
         )}
 
-        <Text style={styles.section}>Cotações do dia</Text>
-        {ratesLoading ? (
-          <ActivityIndicator size="small" />
-        ) : rates ? (
-          <View style={styles.row}>
-            <View style={styles.rateCard}>
-              <Text style={styles.rateCurrency}>USD</Text>
-              <Text style={styles.rateValue}>{formatCurrency(rates.usd.bid)}</Text>
-            </View>
-            <View style={styles.rateCard}>
-              <Text style={styles.rateCurrency}>EUR</Text>
-              <Text style={styles.rateValue}>{formatCurrency(rates.eur.bid)}</Text>
-            </View>
+        <View style={styles.exchangeSection}>
+          <View style={styles.exchangeHeader}>
+            <Text style={styles.section}>Cotações do dia</Text>
+            <Text style={styles.exchangeBase}>Base: BRL</Text>
           </View>
-        ) : (
-          <Text style={styles.error}>Erro ao carregar câmbio</Text>
-        )}
+          {ratesLoading ? (
+            <ActivityIndicator size="small" />
+          ) : rates ? (
+            <>
+              <View style={styles.row}>
+                <View style={styles.rateCard}>
+                  <View style={styles.rateCurrencyContainer}>
+                    <Text style={styles.rateCurrencyIcon}>🇺🇸</Text>
+                    <Text style={styles.rateCurrency}>USD</Text>
+                  </View>
+                  <View style={styles.rateValueContainer}>
+                    <Text style={styles.rateValue}>{formatCurrency(rates.usd.bid)}</Text>
+                  </View>
+                </View>
+                <View style={styles.rateCard}>
+                  <View style={styles.rateCurrencyContainer}>
+                    <Text style={styles.rateCurrencyIcon}>🇪🇺</Text>
+                    <Text style={styles.rateCurrency}>EUR</Text>
+                  </View>
+                  <View style={styles.rateValueContainer}>
+                    <Text style={styles.rateValue}>{formatCurrency(rates.eur.bid)}</Text>
+                  </View>
+                </View>
+              </View>
+              {rates.timestamp && (
+                <Text style={styles.rateTimestamp}>
+                  Atualizado em: {new Date(rates.timestamp).toLocaleDateString('pt-BR')}
+                </Text>
+              )}
+            </>
+          ) : (
+            <Text style={styles.error}>Erro ao carregar câmbio</Text>
+          )}
+        </View>
         <View style={{ height: 20 }} />
       </ScrollView>
     </SafeAreaView>
@@ -135,9 +157,16 @@ const styles = StyleSheet.create({
   income: { color: colors.success, fontSize: 18, fontWeight: '700' },
   expense: { color: colors.danger, fontSize: 18, fontWeight: '700' },
   section: { fontSize: 18, fontWeight: '700', marginVertical: 12, color: colors.text },
-  rateCard: { flex: 1, backgroundColor: colors.card, padding: 14, borderRadius: 16, alignItems: 'center', ...shadow },
-  rateCurrency: { fontWeight: 'bold', fontSize: 16 },
-  rateValue: { fontSize: 18, fontWeight: '700', marginTop: 8, color: colors.primary },
+  exchangeSection: { marginVertical: 16 },
+  exchangeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  exchangeBase: { fontSize: 12, color: colors.textMuted, backgroundColor: colors.card, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  rateCard: { flex: 1, backgroundColor: colors.card, padding: 16, borderRadius: 16, alignItems: 'center', ...shadow },
+  rateCurrencyContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  rateCurrencyIcon: { fontSize: 24, marginRight: 6 },
+  rateCurrency: { fontWeight: 'bold', fontSize: 16, color: colors.text },
+  rateValueContainer: { marginTop: 10 },
+  rateValue: { fontSize: 20, fontWeight: '700', color: colors.primary, textAlign: 'center' },
+  rateTimestamp: { fontSize: 11, color: colors.textMuted, textAlign: 'center', marginTop: 8 },
   empty: { textAlign: 'center', color: colors.textMuted, marginVertical: 20 },
   error: { color: colors.danger, textAlign: 'center' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },

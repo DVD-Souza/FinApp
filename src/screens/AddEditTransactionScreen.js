@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ScrollView, Alert, StyleSheet, SafeAreaView, Platform } from 'react-native';
+import { View, Text, TextInput, ScrollView, Alert, StyleSheet, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFinance } from '../context/FinanceContext';
 import CategoryPicker from '../components/CategoryPicker';

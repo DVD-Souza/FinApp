@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL';
+const API_URL = 'https://api.fxratesapi.com/latest';
+const BASE_CURRENCY = 'BRL';
 let cache = null;
 let lastFetch = 0;
 
@@ -9,16 +10,23 @@ export const fetchExchangeRates = async () => {
   if (cache && now - lastFetch < 60000) return cache;
 
   try {
-    const { data } = await axios.get(API_URL);
+    const { data } = await axios.get(API_URL, {
+      params: {
+        base: BASE_CURRENCY,
+        symbols: 'USD,EUR',
+      },
+    });
+
     cache = {
       usd: {
-        bid: parseFloat(data.USDBRL.bid),
-        variation: parseFloat(data.USDBRL.pctChange),
+        bid: parseFloat(data.rates.USD),
+        variation: 0,
       },
       eur: {
-        bid: parseFloat(data.EURBRL.bid),
-        variation: parseFloat(data.EURBRL.pctChange),
+        bid: parseFloat(data.rates.EUR),
+        variation: 0,
       },
+      timestamp: data.date,
     };
     lastFetch = now;
     return cache;

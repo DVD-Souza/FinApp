@@ -1,40 +1,38 @@
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { colors } from '../utils/colors';
 
-const DEFAULT_CATEGORIES = ['Alimentação'];
+const FALLBACK_CATEGORIES = ['Alimentação'];
 
-export default function CategoryPicker({ selected, onSelect, categories }) {
+function CategoryPicker({ selected, onSelect, categories }) {
   const safeCategories = useMemo(() => {
     return Array.isArray(categories) && categories.length > 0
       ? categories
-      : DEFAULT_CATEGORIES;
+      : FALLBACK_CATEGORIES;
   }, [categories]);
 
   const safeSelected = useMemo(() => {
-    return safeCategories.includes(selected)
-      ? selected
-      : safeCategories[0];
+    return safeCategories.includes(selected) ? selected : safeCategories[0];
   }, [selected, safeCategories]);
 
   return (
-    <View style={styles.container}>
-      <Picker
-        selectedValue={safeSelected}
-        onValueChange={(value) => {
-          if (value && value !== selected) {
-            onSelect(value);
-          }
-        }}
-      >
-        {safeCategories.map((cat) => (
-          <Picker.Item key={cat} label={cat} value={cat} />
+    <View
+      style={styles.container}
+      accessibilityLabel="Selecionar categoria"
+      accessibilityHint="Escolha a categoria da transação"
+      accessibilityRole="combobox"
+    >
+      <Picker selectedValue={safeSelected} onValueChange={onSelect}>
+        {safeCategories.map((category) => (
+          <Picker.Item key={category} label={category} value={category} />
         ))}
       </Picker>
     </View>
   );
 }
+
+export default memo(CategoryPicker);
 
 const styles = StyleSheet.create({
   container: {

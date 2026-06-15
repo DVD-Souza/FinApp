@@ -1,51 +1,95 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, SafeAreaView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+  Platform,
+  useWindowDimensions,
+} from 'react-native';
 import { PieChart, LineChart } from 'react-native-chart-kit';
 import { useFinance } from '../context/FinanceContext';
 import MonthYearPicker from '../components/MonthYearPicker';
 import { getMonthYear } from '../utils/helpers';
 import { colors } from '../utils/colors';
 
-const screenWidth = Dimensions.get('window').width;
+const CHART_COLORS = [
+  '#10B981',
+  '#EF4444',
+  '#F59E0B',
+  '#3B82F6',
+  '#8B5CF6',
+  '#EC4899',
+  '#14B8A6',
+  '#F97316',
+];
 
 export default function ReportsScreen() {
   const { transactions } = useFinance();
   const [selectedMonth, setSelectedMonth] = useState(getMonthYear(new Date()));
+  const { width: screenWidth } = useWindowDimensions();
 
-  const filtered = transactions.filter(t => getMonthYear(t.date) === selectedMonth);
-  const expenses = filtered.filter(t => t.amount < 0);
+  const chartWidth = Math.max(screenWidth - 32, 280);
+
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((transaction) => getMonthYear(transaction.date) === selectedMonth);
+  }, [transactions, selectedMonth]);
+
+  const expenses = useMemo(() => {
+    return filteredTransactions.filter((transaction) => Number(transaction.amount) < 0);
+  }, [filteredTransactions]);
 
   const pieData = useMemo(() => {
-    const map = new Map();
-    expenses.forEach(t => {
-      if (!t.category) return;
-      const cat = t.category;
-      map.set(cat, (map.get(cat) || 0) + Math.abs(t.amount));
+    const categoryMap = new Map();
+
+    expenses.forEach((transaction) => {
+      if (!transaction.category) return;
+
+      const currentAmount = categoryMap.get(transaction.category) || 0;
+      categoryMap.set(transaction.category, currentAmount + Math.abs(Number(transaction.amount) || 0));
     });
 
-    const data = Array.from(map.entries()).map(([name, value], idx) => ({
-      name: name.length > 12 ? name.slice(0, 10) + '…' : name,
-      amount: value,
-      color: `hsl(${idx * 45}, 70%, 60%)`,
-      legendFontColor: colors?.text || '#333',
-    }));
-
-    return data.filter(item => item && item.color && item.amount > 0);
+    return Array.from(categoryMap.entries())
+      .map(([name, amount], index) => ({
+        name: name.length > 12 ? `${name.slice(0, 10)}…` : name,
+        amount,
+        color: CHART_COLORS[index % CHART_COLORS.length],
+        legendFontColor: colors.text,
+        legendFontSize: 12,
+      }))
+      .filter((item) => item.amount > 0);
   }, [expenses]);
 
   const monthlySeries = useMemo(() => {
     const labels = [];
     const incomeData = [];
     const expenseData = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date();
-      d.setMonth(d.getMonth() - i);
-      const key = getMonthYear(d);
+
+    for (let index = 5; index >= 0; index -= 1) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - index);
+
+      const key = getMonthYear(date);
+      const monthTransactions = transactions.filter(
+        (transaction) => getMonthYear(transaction.date) === key
+      );
+
       labels.push(key.slice(5));
-      const monthTxs = transactions.filter(t => getMonthYear(t.date) === key);
-      incomeData.push(monthTxs.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0));
-      expenseData.push(monthTxs.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0));
+
+      incomeData.push(
+        monthTransactions
+          .filter((transaction) => Number(transaction.amount) > 0)
+          .reduce((sum, transaction) => sum + Number(transaction.amount), 0)
+      );
+
+      expenseData.push(
+        monthTransactions
+          .filter((transaction) => Number(transaction.amount) < 0)
+          .reduce((sum, transaction) => sum + Math.abs(Number(transaction.amount)), 0)
+      );
     }
+
     return { labels, incomeData, expenseData };
   }, [transactions]);
 
@@ -54,19 +98,24 @@ export default function ReportsScreen() {
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Relatórios</Text>
+        <Text style={styles.title} accessibilityRole="header">
+          Relatórios
+        </Text>
+
         <MonthYearPicker value={selectedMonth} onChange={setSelectedMonth} />
 
-        <Text style={styles.section}>
+        <Text style={styles.section} accessibilityRole="header">
           Despesas por categoria ({selectedMonth.slice(5)}/{selectedMonth.slice(0, 4)})
         </Text>
+
         {pieData.length === 0 ? (
           <Text style={styles.empty}>Nenhuma despesa neste período</Text>
         ) : (
           <PieChart
             data={pieData}
-            width={screenWidth - 32}
+            width={chartWidth}
             height={220}
             accessor="amount"
             backgroundColor="transparent"
@@ -78,17 +127,28 @@ export default function ReportsScreen() {
           />
         )}
 
-        <Text style={styles.section}>Evolução (últimos 6 meses)</Text>
+        <Text style={styles.section} accessibilityRole="header">
+          Evolução (últimos 6 meses)
+        </Text>
+
         <LineChart
           data={{
             labels: monthlySeries.labels,
             datasets: [
-              { data: monthlySeries.incomeData, color: () => colors.success, strokeWidth: 2 },
-              { data: monthlySeries.expenseData, color: () => colors.danger, strokeWidth: 2 },
+              {
+                data: monthlySeries.incomeData,
+                color: () => colors.success,
+                strokeWidth: 2,
+              },
+              {
+                data: monthlySeries.expenseData,
+                color: () => colors.danger,
+                strokeWidth: 2,
+              },
             ],
             legend: ['Receitas', 'Despesas'],
           }}
-          width={screenWidth - 32}
+          width={chartWidth}
           height={220}
           chartConfig={{
             backgroundColor: colors.card,
@@ -101,7 +161,8 @@ export default function ReportsScreen() {
           bezier
           style={styles.chart}
         />
-        <View style={{ height: 20 }} />
+
+        <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -141,5 +202,8 @@ const styles = StyleSheet.create({
   chart: {
     borderRadius: 16,
     marginVertical: 8,
+  },
+  bottomSpacer: {
+    height: 20,
   },
 });

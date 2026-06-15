@@ -1,4 +1,4 @@
-export const colors = {
+export const colors = Object.freeze({
   primary: '#10B981',
   primaryDark: '#059669',
   background: '#F8FAFC',
@@ -9,4 +9,4 @@ export const colors = {
   danger: '#EF4444',
   border: '#E2E8F0',
   warning: '#F59E0B',
-};
+});

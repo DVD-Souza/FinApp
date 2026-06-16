@@ -15,13 +15,12 @@ import { getMonthYear } from '../utils/helpers';
 import { colors } from '../utils/colors';
 
 const CHART_COLORS = [
-  '#10B981',
   '#EF4444',
   '#F59E0B',
   '#3B82F6',
   '#8B5CF6',
   '#EC4899',
-  '#14B8A6',
+  '#0d8778',
   '#F97316',
 ];
 

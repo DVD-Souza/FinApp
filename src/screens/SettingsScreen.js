@@ -16,8 +16,6 @@ import { colors } from '../utils/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useTabBarVisibility } from '../hooks/useTabBarVisibility';
 
-// Se você precisar de categorias padrão, pode manter essa lista
-// ou obtê-las de um arquivo de constantes.
 const DEFAULT_CATEGORIES = [
   'Alimentação',
   'Transporte',

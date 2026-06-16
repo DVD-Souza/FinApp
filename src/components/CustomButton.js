@@ -1,16 +1,17 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { colors } from '../utils/colors';
 
-export default function CustomButton({ 
-  title, 
-  onPress, 
-  type = 'primary',  // 'primary', 'success', 'danger', 'outline'
-  small = false, 
+function CustomButton({
+  title,
+  onPress,
+  type = 'primary',
+  small = false,
   disabled = false,
-  style = {}
+  style,
+  accessibilityHint,
 }) {
-  const getButtonStyle = () => {
+  const buttonStyle = useMemo(() => {
     switch (type) {
       case 'success':
         return styles.success;
@@ -21,29 +22,37 @@ export default function CustomButton({
       default:
         return styles.primary;
     }
-  };
+  }, [type]);
 
-  const getTextStyle = () => {
-    if (type === 'outline') return styles.outlineText;
-    return styles.text;
-  };
+  const textStyle = useMemo(() => {
+    return type === 'outline' ? styles.outlineText : styles.text;
+  }, [type]);
 
   return (
     <TouchableOpacity
       style={[
         styles.button,
-        getButtonStyle(),
+        buttonStyle,
         small && styles.small,
         disabled && styles.disabled,
         style,
       ]}
       onPress={onPress}
       disabled={disabled}
+      activeOpacity={0.8}
+      accessibilityLabel={title}
+      accessibilityHint={accessibilityHint}
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
     >
-      <Text style={[getTextStyle(), small && styles.smallText]}>{title}</Text>
+      <Text style={[textStyle, small && styles.smallText]} numberOfLines={1}>
+        {title}
+      </Text>
     </TouchableOpacity>
   );
 }
+
+export default memo(CustomButton);
 
 const styles = StyleSheet.create({
   button: {
@@ -51,6 +60,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 48,
   },
   primary: {
     backgroundColor: colors.primary,
@@ -69,6 +79,7 @@ const styles = StyleSheet.create({
   small: {
     paddingVertical: 8,
     paddingHorizontal: 16,
+    minHeight: 40,
   },
   disabled: {
     opacity: 0.6,

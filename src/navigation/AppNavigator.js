@@ -8,8 +8,18 @@ const Stack = createNativeStackNavigator();
 export default function AppNavigator() {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="MainTabs" component={TabNavigator} options={{ headerShown: false }} />
-      <Stack.Screen name="AddEdit" component={AddEditTransactionScreen} options={{ title: 'Nova Transação' }} />
+      <Stack.Screen
+        name="MainTabs"
+        component={TabNavigator}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AddEdit"
+        component={AddEditTransactionScreen}
+        options={({ route }) => ({
+          title: route?.params?.transaction ? 'Editar Transação' : 'Nova Transação',
+        })}
+      />
     </Stack.Navigator>
   );
 }

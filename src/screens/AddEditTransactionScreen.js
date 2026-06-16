@@ -1,7 +1,4 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, ScrollView, Alert, StyleSheet, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,11 +6,11 @@ import {
   ScrollView,
   Alert,
   StyleSheet,
-  SafeAreaView,
   Platform,
   KeyboardAvoidingView,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFinance } from '../context/FinanceContext';
 import CategoryPicker from '../components/CategoryPicker';

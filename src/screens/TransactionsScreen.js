@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
-import { View, FlatList, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, FlatList, Text, StyleSheet, TouchableOpacity, SafeAreaView, Platform, Alert } from 'react-native';
+import {
+  View,
+  FlatList,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFinance } from '../context/FinanceContext';
 import TransactionItem from '../components/TransactionItem';
 import MonthYearPicker from '../components/MonthYearPicker';
@@ -16,8 +22,8 @@ export default function TransactionsScreen({ navigation, setHideTabBar }) {
   const [selectedMonth, setSelectedMonth] = useState(getMonthYear(new Date()));
 
   const handleScroll = useTabBarVisibility(
-    () => setHideTabBar(true),
-    () => setHideTabBar(false)
+    () => setHideTabBar?.(true),
+    () => setHideTabBar?.(false)
   );
 
   const filtered = useMemo(
@@ -39,7 +45,7 @@ export default function TransactionsScreen({ navigation, setHideTabBar }) {
         { text: 'Excluir', style: 'destructive', onPress: () => deleteTransaction(id) }
       ]
     );
-  }, []);
+  }, [deleteTransaction]);
 
   return (
     <SafeAreaView style={styles.safeArea}>

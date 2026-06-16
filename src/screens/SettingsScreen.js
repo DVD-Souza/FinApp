@@ -1,6 +1,3 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, Alert, StyleSheet, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState, useCallback } from 'react';
 import {
   View,
@@ -10,15 +7,17 @@ import {
   TouchableOpacity,
   Alert,
   StyleSheet,
-  SafeAreaView,
   Platform,
   Keyboard,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFinance } from '../context/FinanceContext';
 import { colors } from '../utils/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useTabBarVisibility } from '../hooks/useTabBarVisibility';
 
+// Se você precisar de categorias padrão, pode manter essa lista
+// ou obtê-las de um arquivo de constantes.
 const DEFAULT_CATEGORIES = [
   'Alimentação',
   'Transporte',
@@ -35,10 +34,9 @@ export default function SettingsScreen({ setHideTabBar }) {
   const { categories, addCategory, removeCategory } = useFinance();
   const [newCat, setNewCat] = useState('');
 
-  // ✅ controle da TabBar
   const handleScroll = useTabBarVisibility(
-    () => setHideTabBar(true),
-    () => setHideTabBar(false)
+    () => setHideTabBar?.(true),
+    () => setHideTabBar?.(false)
   );
 
   const handleAdd = useCallback(() => {
@@ -212,6 +210,6 @@ const styles = StyleSheet.create({
   },
 
   listContent: {
-    paddingBottom: 120, // ✅ ESSENCIAL para evitar sobreposição
+    paddingBottom: 120,
   },
 });

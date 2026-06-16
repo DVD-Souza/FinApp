@@ -1,60 +1,126 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import AnimatedTabBar from './AnimatedTabBar';
+import { Ionicons } from '@expo/vector-icons';
+
 import DashboardScreen from '../screens/DashboardScreen';
 import TransactionsScreen from '../screens/TransactionsScreen';
 import ReportsScreen from '../screens/ReportsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../utils/colors';
 
 const Tab = createBottomTabNavigator();
 
+const ICONS = {
+  Dashboard: 'pie-chart',
+  Transações: 'list',
+  Relatórios: 'bar-chart',
+  Configurações: 'settings',
+};
+
 export default function TabNavigator() {
   const [hideTabBar, setHideTabBar] = useState(false);
+  const translateY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(translateY, {
+      toValue: hideTabBar ? 120 : 0,
+      duration: 220,
+      useNativeDriver: true,
+    }).start();
+  }, [hideTabBar, translateY]);
 
   return (
     <Tab.Navigator
-      tabBar={(props) => <AnimatedTabBar {...props} hideTabBar={hideTabBar} />}
       screenOptions={({ route }) => ({
         headerShown: false,
+
         tabBarShowLabel: false,
+
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
+
         tabBarStyle: {
           position: 'absolute',
-          bottom: 16,
           left: 16,
           right: 16,
-          borderRadius: 28,
+          bottom: 16,
+
           height: 64,
+
+          borderRadius: 28,
           backgroundColor: colors.card,
+
+          paddingTop: 0,
+          paddingBottom: 0,
+
+          borderTopWidth: 0,
+          elevation: 8,
         },
-        tabBarIcon: ({ color, size }) => {
-          const icons = {
-            Dashboard: 'pie-chart',
-            Transações: 'list',
-            Relatórios: 'bar-chart',
-            Configurações: 'settings',
-          };
-          return <Ionicons name={icons[route.name]} size={size} color={color} />;
+
+        tabBarItemStyle: {
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 0,
+          margin: 0,
         },
+
+        tabBarIconStyle: {
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+
+        tabBarIcon: ({ color, focused }) => (
+          <View
+            style={{
+              flex: 1,
+              width: '100%',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Ionicons
+              name={ICONS[route.name]}
+              size={focused ? 26 : 24}
+              color={color}
+            />
+          </View>
+        ),
       })}
     >
       <Tab.Screen name="Dashboard">
-        {(props) => <DashboardScreen {...props} setHideTabBar={setHideTabBar} />}
+        {(props) => (
+          <DashboardScreen
+            {...props}
+            setHideTabBar={setHideTabBar}
+          />
+        )}
       </Tab.Screen>
 
       <Tab.Screen name="Transações">
-        {(props) => <TransactionsScreen {...props} setHideTabBar={setHideTabBar} />}
+        {(props) => (
+          <TransactionsScreen
+            {...props}
+            setHideTabBar={setHideTabBar}
+          />
+        )}
       </Tab.Screen>
 
-      <Tab.Screen name="Relatórios" component={ReportsScreen} />
+      <Tab.Screen
+        name="Relatórios"
+        component={ReportsScreen}
+      />
 
       <Tab.Screen name="Configurações">
-        {(props) => <SettingsScreen {...props} setHideTabBar={setHideTabBar} />}
+        {(props) => (
+          <SettingsScreen
+            {...props}
+            setHideTabBar={setHideTabBar}
+          />
+        )}
       </Tab.Screen>
     </Tab.Navigator>
   );
 }
-``

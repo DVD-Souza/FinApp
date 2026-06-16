@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
   Text,

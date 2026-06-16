@@ -1,3 +1,6 @@
+import React, { useState } from 'react';
+import { View, FlatList, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, FlatList, Text, StyleSheet, TouchableOpacity, SafeAreaView, Platform, Alert } from 'react-native';
 import { useFinance } from '../context/FinanceContext';

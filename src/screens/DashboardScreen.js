@@ -1,3 +1,6 @@
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
@@ -25,6 +28,8 @@ export default function DashboardScreen({ navigation, setHideTabBar }) {
     () => setHideTabBar(false)
   );
 
+export default function DashboardScreen({ navigation }) {
+  const { transactions, deleteTransaction, loading: ctxLoading, error: ctxError } = useFinance();
   const [rates, setRates] = useState(null);
   const [ratesLoading, setRatesLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -111,33 +116,59 @@ export default function DashboardScreen({ navigation, setHideTabBar }) {
         </View>
 
         <Text style={styles.section}>Últimas transações</Text>
-
-        {lastTransactions.map(tx => (
-          <TransactionItem
-            key={tx.id}
-            transaction={tx}
-            onEdit={() => navigation.navigate('AddEdit', { transaction: tx })}
-            onDelete={() => handleDelete(tx)}
-          />
-        ))}
-
-        <Text style={styles.section}>Cotações do dia</Text>
-
-        {ratesLoading ? (
-          <ActivityIndicator />
+        {lastTransactions.length === 0 ? (
+          <Text style={styles.empty}>Nenhuma transação ainda</Text>
         ) : (
-          <View style={styles.row}>
-            <View style={styles.card}>
-              <Text>USD</Text>
-              <Text>{formatCurrency(rates?.usd?.bid || 0)}</Text>
-            </View>
-
-            <View style={styles.card}>
-              <Text>EUR</Text>
-              <Text>{formatCurrency(rates?.eur?.bid || 0)}</Text>
-            </View>
-          </View>
+          lastTransactions.map(tx => (
+            <TransactionItem
+              key={tx.id}
+              transaction={tx}
+              onEdit={() => navigation.navigate('AddEdit', { transaction: tx })}
+              onDelete={() => deleteTransaction(tx.id)}
+            />
+          ))
         )}
+
+        <View style={styles.exchangeSection}>
+          <View style={styles.exchangeHeader}>
+            <Text style={styles.section}>Cotações do dia</Text>
+            <Text style={styles.exchangeBase}>Base: BRL</Text>
+          </View>
+          {ratesLoading ? (
+            <ActivityIndicator size="small" />
+          ) : rates ? (
+            <>
+              <View style={styles.row}>
+                <View style={styles.rateCard}>
+                  <View style={styles.rateCurrencyContainer}>
+                    <Text style={styles.rateCurrencyIcon}>🇺🇸</Text>
+                    <Text style={styles.rateCurrency}>USD</Text>
+                  </View>
+                  <View style={styles.rateValueContainer}>
+                    <Text style={styles.rateValue}>{formatCurrency(rates.usd.bid)}</Text>
+                  </View>
+                </View>
+                <View style={styles.rateCard}>
+                  <View style={styles.rateCurrencyContainer}>
+                    <Text style={styles.rateCurrencyIcon}>🇪🇺</Text>
+                    <Text style={styles.rateCurrency}>EUR</Text>
+                  </View>
+                  <View style={styles.rateValueContainer}>
+                    <Text style={styles.rateValue}>{formatCurrency(rates.eur.bid)}</Text>
+                  </View>
+                </View>
+              </View>
+              {rates.timestamp && (
+                <Text style={styles.rateTimestamp}>
+                  Atualizado em: {new Date(rates.timestamp).toLocaleDateString('pt-BR')}
+                </Text>
+              )}
+            </>
+          ) : (
+            <Text style={styles.error}>Erro ao carregar câmbio</Text>
+          )}
+        </View>
+        <View style={{ height: 20 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -151,11 +182,35 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   cardMain: { backgroundColor: colors.primary, padding: 24, borderRadius: 24, marginBottom: 16 },
-  balance: { fontSize: 28, color: '#FFF' },
-  label: { color: '#FFF' },
-  row: { flexDirection: 'row', gap: 10, marginBottom: 16 },
-  card: { flex: 1, padding: 16, backgroundColor: colors.card, borderRadius: 12 },
-  income: { color: colors.success },
-  expense: { color: colors.danger },
-  section: { fontSize: 18, marginVertical: 10 },
+  balance: { fontSize: 34, fontWeight: '700', color: '#FFF', marginTop: 8 },
+  label: { color: '#E5E7EB', fontSize: 14 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, marginBottom: 16 },
+  card: { flex: 1, backgroundColor: colors.card, padding: 16, borderRadius: 16, ...shadow },
+  smallLabel: { color: colors.textMuted, fontSize: 12 },
+  income: { color: colors.success, fontSize: 18, fontWeight: '700' },
+  expense: { color: colors.danger, fontSize: 18, fontWeight: '700' },
+  section: { fontSize: 18, fontWeight: '700', marginVertical: 12, color: colors.text },
+  exchangeSection: { marginVertical: 16 },
+  exchangeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  exchangeBase: { fontSize: 12, color: colors.textMuted, backgroundColor: colors.card, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  rateCard: { flex: 1, backgroundColor: colors.card, padding: 16, borderRadius: 16, alignItems: 'center', ...shadow },
+  rateCurrencyContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  rateCurrencyIcon: { fontSize: 24, marginRight: 6 },
+  rateCurrency: { fontWeight: 'bold', fontSize: 16, color: colors.text },
+  rateValueContainer: { marginTop: 10 },
+  rateValue: { fontSize: 20, fontWeight: '700', color: colors.primary, textAlign: 'center' },
+  rateTimestamp: { fontSize: 11, color: colors.textMuted, textAlign: 'center', marginTop: 8 },
+  empty: { textAlign: 'center', color: colors.textMuted, marginVertical: 20 },
+  error: { color: colors.danger, textAlign: 'center' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  errorText: { fontSize: 18, color: colors.danger, marginBottom: 8 },
+  errorSub: { fontSize: 14, color: colors.textMuted },
 });
+
+const shadow = {
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.05,
+  shadowRadius: 2,
+  elevation: 2,
+};

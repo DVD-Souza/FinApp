@@ -1,3 +1,6 @@
+import React, { useState } from 'react';
+import { View, Text, TextInput, FlatList, TouchableOpacity, Alert, StyleSheet, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState, useCallback } from 'react';
 import {
   View,

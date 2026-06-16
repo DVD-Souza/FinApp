@@ -1,11 +1,32 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl,
+  SafeAreaView,
+  Platform,
+  Alert,
+} from 'react-native';
 import { useFinance } from '../context/FinanceContext';
 import TransactionItem from '../components/TransactionItem';
 import { formatCurrency, getMonthYear } from '../utils/helpers';
 import { fetchExchangeRates } from '../services/api';
 import { colors } from '../utils/colors';
+import { useTabBarVisibility } from '../hooks/useTabBarVisibility';
+
+export default function DashboardScreen({ navigation, setHideTabBar }) {
+  const { transactions, loading: ctxLoading, error: ctxError, deleteTransaction } = useFinance();
+
+  const handleScroll = useTabBarVisibility(
+    () => setHideTabBar(true),
+    () => setHideTabBar(false)
+  );
 
 export default function DashboardScreen({ navigation }) {
   const { transactions, deleteTransaction, loading: ctxLoading, error: ctxError } = useFinance();
@@ -14,10 +35,18 @@ export default function DashboardScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
 
   const currentMonth = getMonthYear(new Date());
-  const monthlyTransactions = transactions.filter(t => getMonthYear(t.date) === currentMonth);
-  const income = monthlyTransactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
-  const expense = monthlyTransactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
-  const balance = income - expense;
+
+  const monthlyTransactions = useMemo(
+    () => transactions.filter(t => getMonthYear(t.date) === currentMonth),
+    [transactions]
+  );
+
+  const { income, expense, balance } = useMemo(() => {
+    const inc = monthlyTransactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+    const exp = monthlyTransactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+    return { income: inc, expense: exp, balance: inc - exp };
+  }, [monthlyTransactions]);
+
   const lastTransactions = transactions.slice(0, 5);
 
   const loadRates = useCallback(async () => {
@@ -25,8 +54,8 @@ export default function DashboardScreen({ navigation }) {
     try {
       const data = await fetchExchangeRates();
       setRates(data);
-    } catch (error) {
-      console.error(error);
+    } catch {
+      Alert.alert('Erro', 'Falha ao carregar cotações.');
     } finally {
       setRatesLoading(false);
     }
@@ -36,23 +65,22 @@ export default function DashboardScreen({ navigation }) {
     loadRates();
   }, []);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadRates();
     setRefreshing(false);
-  };
+  }, []);
 
-  // Mostra erro de contexto se houver
-  if (ctxError) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.center}>
-          <Text style={styles.errorText}>Erro ao carregar dados</Text>
-          <Text style={styles.errorSub}>{ctxError.message}</Text>
-        </View>
-      </SafeAreaView>
+  const handleDelete = useCallback((tx) => {
+    Alert.alert(
+      'Excluir transação',
+      `Remover "${tx.description}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Excluir', style: 'destructive', onPress: () => deleteTransaction(tx.id) }
+      ]
     );
-  }
+  }, [deleteTransaction]);
 
   if (ctxLoading) {
     return (
@@ -65,7 +93,8 @@ export default function DashboardScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
-        style={styles.container}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         contentContainerStyle={styles.scrollContent}
       >
@@ -76,11 +105,12 @@ export default function DashboardScreen({ navigation }) {
 
         <View style={styles.row}>
           <View style={styles.card}>
-            <Text style={styles.smallLabel}>Receitas</Text>
+            <Text>Receitas</Text>
             <Text style={styles.income}>{formatCurrency(income)}</Text>
           </View>
+
           <View style={styles.card}>
-            <Text style={styles.smallLabel}>Despesas</Text>
+            <Text>Despesas</Text>
             <Text style={styles.expense}>{formatCurrency(expense)}</Text>
           </View>
         </View>
@@ -146,8 +176,11 @@ export default function DashboardScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
-  container: { flex: 1, backgroundColor: colors.background },
-  scrollContent: { paddingHorizontal: 16, paddingTop: Platform.OS === 'android' ? 40 : 16, paddingBottom: 20 },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'android' ? 40 : 16,
+    paddingBottom: 120,
+  },
   cardMain: { backgroundColor: colors.primary, padding: 24, borderRadius: 24, marginBottom: 16 },
   balance: { fontSize: 34, fontWeight: '700', color: '#FFF', marginTop: 8 },
   label: { color: '#E5E7EB', fontSize: 14 },

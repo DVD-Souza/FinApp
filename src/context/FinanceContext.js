@@ -1,9 +1,16 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { loadData, saveData } from '../services/storage';
 
-const FinanceContext = createContext();
+const FinanceContext = createContext(null);
 
-const DEFAULT_CATEGORIES = [
+export const DEFAULT_CATEGORIES = Object.freeze([
   'Alimentação',
   'Transporte',
   'Lazer',
@@ -13,31 +20,53 @@ const DEFAULT_CATEGORIES = [
   'Salário',
   'Investimentos',
   'Outros',
-];
+]);
+
+const createTransactionId = () => {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const normalizeCategoryName = (category) => {
+  return typeof category === 'string' ? category.trim() : '';
+};
 
 export const FinanceProvider = ({ children }) => {
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     const init = async () => {
-      const data = await loadData();
+      try {
+        const data = await loadData();
 
-      setTransactions(
-        Array.isArray(data?.transactions) ? data.transactions : []
-      );
+        if (!isMounted) return;
 
-      setCategories(
-        Array.isArray(data?.categories) && data.categories.length > 0
-          ? data.categories
-          : DEFAULT_CATEGORIES
-      );
-
-      setLoading(false);
+        setTransactions(Array.isArray(data?.transactions) ? data.transactions : []);
+        setCategories(
+          Array.isArray(data?.categories) && data.categories.length > 0
+            ? data.categories
+            : DEFAULT_CATEGORIES
+        );
+      } catch (err) {
+        if (isMounted) {
+          setError(err?.message || 'Erro ao carregar dados financeiros');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
     };
 
     init();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -46,53 +75,95 @@ export const FinanceProvider = ({ children }) => {
     }
   }, [transactions, categories, loading]);
 
-  const addTransaction = (tx) =>
+  const addTransaction = useCallback((tx) => {
     setTransactions((prev) => [
-      { ...tx, id: Date.now().toString() },
+      {
+        ...tx,
+        id: createTransactionId(),
+      },
       ...prev,
     ]);
+  }, []);
 
-  const updateTransaction = (id, updated) =>
+  const updateTransaction = useCallback((id, updated) => {
     setTransactions((prev) =>
-      prev.map((t) => (t.id === id ? { ...updated, id } : t))
+      prev.map((transaction) =>
+        transaction.id === id
+          ? {
+              ...transaction,
+              ...updated,
+              id,
+            }
+          : transaction
+      )
     );
+  }, []);
 
-  const deleteTransaction = (id) =>
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
+  const deleteTransaction = useCallback((id) => {
+    setTransactions((prev) => prev.filter((transaction) => transaction.id !== id));
+  }, []);
 
-  const addCategory = (cat) => {
-    setCategories((prev) =>
-      prev.includes(cat) ? prev : [...prev, cat]
-    );
-  };
+  const addCategory = useCallback((category) => {
+    const normalizedCategory = normalizeCategoryName(category);
 
-  const removeCategory = (cat) => {
-    if (DEFAULT_CATEGORIES.includes(cat)) return;
-    setCategories((prev) => prev.filter((c) => c !== cat));
-  };
+    if (!normalizedCategory) return false;
 
-  return (
-    <FinanceContext.Provider
-      value={{
-        transactions,
-        categories,
-        loading,
-        addTransaction,
-        updateTransaction,
-        deleteTransaction,
-        addCategory,
-        removeCategory,
-      }}
-    >
-      {children}
-    </FinanceContext.Provider>
+    setCategories((prev) => {
+      const alreadyExists = prev.some(
+        (item) => item.toLowerCase() === normalizedCategory.toLowerCase()
+      );
+
+      return alreadyExists ? prev : [...prev, normalizedCategory];
+    });
+
+    return true;
+  }, []);
+
+  const removeCategory = useCallback((category) => {
+    const normalizedCategory = normalizeCategoryName(category);
+
+    if (!normalizedCategory || DEFAULT_CATEGORIES.includes(normalizedCategory)) {
+      return false;
+    }
+
+    setCategories((prev) => prev.filter((item) => item !== normalizedCategory));
+    return true;
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      transactions,
+      categories,
+      loading,
+      error,
+      addTransaction,
+      updateTransaction,
+      deleteTransaction,
+      addCategory,
+      removeCategory,
+    }),
+    [
+      transactions,
+      categories,
+      loading,
+      error,
+      addTransaction,
+      updateTransaction,
+      deleteTransaction,
+      addCategory,
+      removeCategory,
+    ]
   );
+
+  return <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>;
 };
 
 export const useFinance = () => {
   const context = useContext(FinanceContext);
+
   if (!context) {
     throw new Error('useFinance must be used within FinanceProvider');
   }
+
   return context;
 };

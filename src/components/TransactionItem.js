@@ -1,34 +1,64 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { formatCurrency, formatDate } from '../utils/helpers';
 import { colors } from '../utils/colors';
 
-export default function TransactionItem({ transaction, onEdit, onDelete }) {
-  const isIncome = transaction.amount > 0;
+function TransactionItem({ transaction, onEdit, onDelete }) {
+  const isIncome = Number(transaction?.amount) > 0;
+
+  const amountText = useMemo(() => {
+    return formatCurrency(transaction?.amount);
+  }, [transaction?.amount]);
+
+  const dateText = useMemo(() => {
+    return formatDate(transaction?.date);
+  }, [transaction?.date]);
+
+  const description = transaction?.description || 'Transação sem descrição';
+  const category = transaction?.category || 'Sem categoria';
 
   return (
-    <View style={styles.item}>
+    <View
+      style={styles.item}
+      accessibilityLabel={`${description}, ${category}, ${amountText}`}
+    >
       <View style={[styles.icon, { backgroundColor: isIncome ? colors.success : colors.danger }]}>
         <Ionicons name={isIncome ? 'arrow-up' : 'arrow-down'} size={18} color="#FFF" />
       </View>
 
       <View style={styles.info}>
-        <Text style={styles.title} numberOfLines={1}>{transaction.description}</Text>
-        <Text style={styles.sub}>
-          {formatDate(transaction.date)} • {transaction.category}
+        <Text style={styles.title} numberOfLines={1}>
+          {description}
+        </Text>
+        <Text style={styles.sub} numberOfLines={1}>
+          {dateText} • {category}
         </Text>
       </View>
 
       <View style={styles.right}>
-        <Text style={[styles.amount, isIncome ? styles.income : styles.expense]}>
-          {formatCurrency(transaction.amount)}
+        <Text style={[styles.amount, isIncome ? styles.income : styles.expense]} numberOfLines={1}>
+          {amountText}
         </Text>
+
         <View style={styles.actions}>
-          <TouchableOpacity onPress={onEdit} style={styles.actionButton}>
+          <TouchableOpacity
+            onPress={onEdit}
+            style={styles.actionButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel={`Editar ${description}`}
+            accessibilityRole="button"
+          >
             <Ionicons name="pencil" size={16} color={colors.primary} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={onDelete} style={styles.actionButton}>
+
+          <TouchableOpacity
+            onPress={onDelete}
+            style={styles.actionButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel={`Excluir ${description}`}
+            accessibilityRole="button"
+          >
             <Ionicons name="trash" size={16} color={colors.danger} />
           </TouchableOpacity>
         </View>
@@ -36,6 +66,8 @@ export default function TransactionItem({ transaction, onEdit, onDelete }) {
     </View>
   );
 }
+
+export default memo(TransactionItem);
 
 const styles = StyleSheet.create({
   item: {
@@ -61,6 +93,7 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
+    minWidth: 0,
   },
   title: {
     fontSize: 15,
@@ -75,14 +108,20 @@ const styles = StyleSheet.create({
   right: {
     alignItems: 'flex-end',
     justifyContent: 'space-between',
+    marginLeft: 8,
+    maxWidth: '42%',
   },
   amount: {
     fontWeight: '700',
     fontSize: 15,
     marginBottom: 6,
   },
-  income: { color: colors.success },
-  expense: { color: colors.danger },
+  income: {
+    color: colors.success,
+  },
+  expense: {
+    color: colors.danger,
+  },
   actions: {
     flexDirection: 'row',
     gap: 12,

@@ -5,9 +5,22 @@ const BASE_CURRENCY = 'BRL';
 let cache = null;
 let lastFetch = 0;
 
+const FALLBACK_RATES = Object.freeze({
+  usd: { bid: 0, variation: 0 },
+  eur: { bid: 0, variation: 0 },
+});
+
+const parseRate = (value) => {
+  const parsedValue = Number.parseFloat(value);
+  return Number.isFinite(parsedValue) ? parsedValue : 0;
+};
+
 export const fetchExchangeRates = async () => {
   const now = Date.now();
-  if (cache && now - lastFetch < 60000) return cache;
+
+  if (cache && now - lastFetch < CACHE_DURATION_MS) {
+    return cache;
+  }
 
   try {
     const { data } = await axios.get(API_URL, {
@@ -28,10 +41,13 @@ export const fetchExchangeRates = async () => {
       },
       timestamp: data.date,
     };
+
     lastFetch = now;
+
     return cache;
   } catch (error) {
-    console.error('Erro na API de câmbio:', error);
-    return cache || { usd: { bid: 0, variation: 0 }, eur: { bid: 0, variation: 0 } };
+    console.warn('Erro ao buscar cotações', error);
+    return cache || FALLBACK_RATES;
   }
 };
+``

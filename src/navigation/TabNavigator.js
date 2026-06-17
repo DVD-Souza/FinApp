@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Animated, View } from 'react-native';
+import React, { useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -7,6 +6,7 @@ import DashboardScreen from '../screens/DashboardScreen';
 import TransactionsScreen from '../screens/TransactionsScreen';
 import ReportsScreen from '../screens/ReportsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import AnimatedTabBar from './AnimatedTabBar';
 import { colors } from '../utils/colors';
 
 const Tab = createBottomTabNavigator();
@@ -20,21 +20,14 @@ const ICONS = {
 
 export default function TabNavigator() {
   const [hideTabBar, setHideTabBar] = useState(false);
-  const translateY = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.timing(translateY, {
-      toValue: hideTabBar ? 120 : 0,
-      duration: 220,
-      useNativeDriver: true,
-    }).start();
-  }, [hideTabBar, translateY]);
 
   return (
     <Tab.Navigator
+      tabBar={(props) => (
+        <AnimatedTabBar {...props} hideTabBar={hideTabBar} />
+      )}
       screenOptions={({ route }) => ({
         headerShown: false,
-
         tabBarShowLabel: false,
 
         tabBarActiveTintColor: colors.primary,
@@ -45,15 +38,11 @@ export default function TabNavigator() {
           left: 16,
           right: 16,
           bottom: 16,
-
           height: 64,
-
           borderRadius: 28,
           backgroundColor: colors.card,
-
           paddingTop: 0,
           paddingBottom: 0,
-
           borderTopWidth: 0,
           elevation: 8,
         },
@@ -73,20 +62,11 @@ export default function TabNavigator() {
         },
 
         tabBarIcon: ({ color, focused }) => (
-          <View
-            style={{
-              flex: 1,
-              width: '100%',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <Ionicons
-              name={ICONS[route.name]}
-              size={focused ? 26 : 24}
-              color={color}
-            />
-          </View>
+          <Ionicons
+            name={ICONS[route.name]}
+            size={focused ? 26 : 24}
+            color={color}
+          />
         ),
       })}
     >
